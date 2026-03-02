@@ -1,40 +1,48 @@
 -- ======================================================
--- ESTUDOS DE SQL - MANIPULAÇÃO DE DADOS (DML)
--- Objetivo: Povoar o banco da Cafeteria e ajustar receitas
+-- ESTUDOS DE SQL - BANCO CAFFEINE_CODE
+-- Objetivo: Script COMPLETO (Cadastro, Ajustes e Consultas)
 -- ======================================================
 
--- 1. INSERINDO MEDIDAS QUE FALTAVAM
--- O IDENTITY cuida dos IDs automaticamente
-INSERT INTO Medida (Nome, Descricao) VALUES ('Unidade', 'un'), ('Gramas', 'g');
+USE Caffeine_Code;
+GO
 
--- 2. INSERINDO AS BEBIDAS
-INSERT INTO Bebida (Nome, ModoPreparo, TempoPreparo, Quantidade, idMedida, Temperatura) VALUES 
-('Suco de Morango', 'Bater morangos com água', 5, 300.00, 1, 'Gelado'),
-('Vitamina de Banana', 'Bater banana com leite', 7, 400.00, 1, 'Gelado'),
-('Chocolate Quente', 'Misturar leite e cacau', 10, 200.00, 1, 'Quente'),
-('Expresso', 'Café moído na hora', 3, 50.00, 1, 'Quente');
+-- 1. CADASTRO INICIAL (DML - Cap 5)
+-- Inserindo Medidas (O IDENTITY cuida dos IDs)
+INSERT INTO Medida (Nome, Descricao) VALUES ('Mililitro', 'ml'), ('Quilo', 'kg'), ('Gramas', 'g');
 
--- 3. CRIANDO AS RECEITAS (Tabela de Ligação)
--- Vinculando ingredientes às bebidas com as quantidades certas
-INSERT INTO BebidaIngrediente (idBebida, idIngrediente, idMedida, Quantidade) 
-VALUES 
-(2, 6, 6, 150.00), -- Suco de Morango: 150g de Morango (ID 6 = g)
-(2, 4, 6, 15.00);   -- Suco de Morango: 15g de Açúcar
+-- Inserindo Bebidas (Apenas as colunas que REALMENTE existem no seu banco)
+INSERT INTO Bebida (Nome, ModoPreparo, Preco) VALUES 
+('Café Mocha', 'Misturar café, leite e cacau', 12.00),
+('Suco de Morango', 'Bater morangos com água', 10.00),
+('Chocolate Quente', 'Misturar leite e cacau', 9.00);
+GO
 
--- 4. AJUSTANDO DADOS (UPDATE)
--- Exemplo de correção de unidade de medida e quantidade
-UPDATE BebidaIngrediente 
-SET idMedida = 6, Quantidade = 15.00 
-WHERE idBebida = 2 AND idIngrediente = 4;
+-- 2. AJUSTES DE ESTRUTURA E DADOS (Cap 6, 7 e 8)
+-- Adicionando a coluna de tempo que o exercício pediu
+IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Bebida') AND name = 'TempoPreparo')
+BEGIN
+    ALTER TABLE Bebida ADD TempoPreparo INT;
+END
+GO
 
--- 5. RELATÓRIO COMPLETO (O "SELECT GRANDÃO")
--- Comando para visualizar nomes em vez de apenas IDs
-SELECT 
-    B.Nome AS [Bebida],
-    I.Nome AS [Ingrediente],
-    BI.Quantidade AS [Qtd],
-    M.Descricao AS [Unidade]
-FROM BebidaIngrediente BI
-INNER JOIN Bebida B ON BI.idBebida = B.idBebida
-INNER JOIN Ingrediente I ON BI.idIngrediente = I.idIngrediente
-INNER JOIN Medida M ON BI.idMedida = M.idMedida;
+-- Atualizando os dados para os exercícios de fixação
+UPDATE Ingrediente SET Nome = 'Cacau em pó 50%' WHERE idIngrediente = 1;
+UPDATE Venda SET Data = '20150115' WHERE MONTH(Data) = 2;
+
+-- Definindo os tempos de preparo
+UPDATE Bebida SET TempoPreparo = 5 WHERE Nome = 'Café Mocha';
+UPDATE Bebida SET TempoPreparo = 12 WHERE Nome = 'Suco de Morango';
+UPDATE Bebida SET TempoPreparo = 8 WHERE Nome = 'Chocolate Quente';
+GO
+
+-- 3. CONSULTAS DE RELATÓRIO (DQL - Cap 8)
+-- Quantidade de bebidas rápidas (entre 5 e 10 min)
+SELECT COUNT(*) AS TotalBebidasRapidas
+FROM Bebida
+WHERE TempoPreparo BETWEEN 5 AND 10;
+
+-- Cardápio ordenado de A a Z
+SELECT Nome, Preco, TempoPreparo 
+FROM Bebida 
+ORDER BY Nome ASC;
+GO
